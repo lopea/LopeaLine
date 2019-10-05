@@ -5,24 +5,60 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class LopeaLine : MonoBehaviour
 {
-    [SerializeField] Vector3[] nodes = { new Vector3(0,0,0), new Vector3(0,0,1)};
+    #region Variables/Accessors
+    //all the nodes used for the mesh
+    [SerializeField] Vector3[] nodes;
+    //radius of the line
     [SerializeField] float Radius = 10;
+    //the amount of vertices surrounding each node
     [SerializeField] int quality = 10;
+    //all the vertices in the mesh
     Vector3[] verts;
+    //store mesh
     Mesh mesh;
+    //all triangle index values
     int[] triangles;
+    //editor variables: only used if Unity Editor modifies values
+#if UNITY_EDITOR
+    int _oldtriangles;
+    int _oldnodecount;
+#endif
+    public Vector3[] Nodes { get { return nodes; } }
+    #endregion
 
-    // Start is called before the first frame update
-    void Start()
+    #region Unity functions
+    void Awake()
     {
        GenerateNewMesh();
-        
     }
+    void Update()
+    {
+    //updating is only necessary when in the editor, not in standalone
+#if UNITY_EDITOR    
+        //checks if there is a node that has been added or removed
+        if (_oldnodecount != nodes.Length)
+    {
+        //create new mesh
+        GenerateNewMesh();
+    }
+    //checks if amount of triangles changes
+    if (_oldtriangles != triangles.Length)
+    {
+        //create new triangle array
+        UpdateTriangles();
+    }
+    }
+#endif
+    #endregion
+
+    #region Modifiers
     void UpdateTriangles()
     {
+
         //reset triangle array
         triangles = new int[quality * (nodes.Length - 1) * 6];
-        
+        //update old values 
+        _oldtriangles = triangles.Length;
         for (int i = 0, y = 0, i0 = 0; y < nodes.Length - 1; y++)
         for (int x = 0; x < quality; x++, i += 6, i0++)
         {
@@ -61,6 +97,8 @@ public class LopeaLine : MonoBehaviour
         //apply vert positions
         mesh.vertices = verts;
     }
+
+
     void GenerateNewMesh()
     {
         mesh = new Mesh();
@@ -69,10 +107,47 @@ public class LopeaLine : MonoBehaviour
         UpdateTriangles();
 
     }
-    // Update is called once per frame
-    void Update()
+
+    /// <summary>
+    /// Adds a new node at the end of the line
+    /// </summary>
+    /// <param name="position">The position of the new node </param>
+    public void AddNode(Vector3 position)
     {
+        var newArray = new Vector3[nodes.Length + 1];
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            newArray[i] = verts[i];
+        }
+        newArray[nodes.Length] = position;
+        nodes = newArray;
         GenerateNewMesh();
     }
-   
+    
+    /// <summary>
+    /// Adds an array of node positions the mesh
+    /// </summary>
+    /// <param name="positions">Array of node positions added to the current list of nodes</param>
+    public void AddNodes(Vector3[] positions)
+    {
+        var newArray = new Vector3[positions.Length + nodes.Length];
+        for (int i =0; i < newArray.Length; i++)
+        {
+            newArray[i] = (i < nodes.Length) ? nodes[i] : positions[i];
+        }
+        nodes = newArray;
+        GenerateNewMesh();
+    }
+    
+    /// <summary>
+    /// Replaces all nodes with an array of new ones
+    /// </summary>
+    /// <param name="positions">The new array that replaces the old node array</param>
+    public void ReplaceNodes(Vector3[] positions)
+    {
+        nodes = positions;
+        GenerateNewMesh();
+    }
+    #endregion
+
 }
