@@ -7,7 +7,7 @@ public class LopeaLine : MonoBehaviour
 {
     #region Variables/Accessors
     //all the nodes used for the mesh
-    [SerializeField] Vector3[] nodes;
+    [SerializeField] GameObject[] nodes;
     //radius of the line
     [SerializeField] float Radius = 10;
     //the amount of vertices surrounding each node
@@ -23,7 +23,7 @@ public class LopeaLine : MonoBehaviour
     int _oldtriangles;
     int _oldnodecount;
 #endif
-    public Vector3[] Nodes { get { return nodes; } }
+    public GameObject[] Nodes { get { return nodes; } }
     #endregion
 
     #region Unity functions
@@ -89,9 +89,11 @@ public class LopeaLine : MonoBehaviour
         {
             for (int x = 0; x < quality; x++, i++) {
                 // create evenly spaced verts in a circle formation
-                verts[i] = new Vector3(Mathf.Sin(2 * Mathf.PI * x / quality+1) * Radius, 
+                verts[i] = nodes[y].transform.TransformPoint( 
+                                       new Vector3(Mathf.Sin(2 * Mathf.PI * x / quality+1) * Radius, 
                                        Mathf.Cos(2 * Mathf.PI * x/ quality+1) * Radius,
-                                       0) + nodes[y];
+                                       0));
+                
             }
         }
         //apply vert positions
@@ -114,23 +116,23 @@ public class LopeaLine : MonoBehaviour
     /// <param name="position">The position of the new node </param>
     public void AddNode(Vector3 position)
     {
-        var newArray = new Vector3[nodes.Length + 1];
+        var newArray = new GameObject[nodes.Length + 1];
         for (int i = 0; i < nodes.Length; i++)
         {
-            newArray[i] = verts[i];
+            newArray[i] = nodes[i];
         }
-        newArray[nodes.Length] = position;
+        newArray[nodes.Length] = new GameObject(nodes.Length.ToString());
         nodes = newArray;
         GenerateNewMesh();
     }
     
     /// <summary>
-    /// Adds an array of node positions the mesh
+    /// Adds an array of node positions to the mesh
     /// </summary>
     /// <param name="positions">Array of node positions added to the current list of nodes</param>
-    public void AddNodes(Vector3[] positions)
+    public void AddNodes(GameObject[] positions)
     {
-        var newArray = new Vector3[positions.Length + nodes.Length];
+        var newArray = new GameObject[positions.Length + nodes.Length];
         for (int i =0; i < newArray.Length; i++)
         {
             newArray[i] = (i < nodes.Length) ? nodes[i] : positions[i];
@@ -143,7 +145,7 @@ public class LopeaLine : MonoBehaviour
     /// Replaces all nodes with an array of new ones
     /// </summary>
     /// <param name="positions">The new array that replaces the old node array</param>
-    public void ReplaceNodes(Vector3[] positions)
+    public void ReplaceNodes(GameObject[] positions)
     {
         nodes = positions;
         GenerateNewMesh();
